@@ -11,11 +11,13 @@ main(_Args) ->
   Root   = filename:dirname(filename:dirname(escript:script_name())),
   DefEnv = os:getenv("MIX_ENV", "default"),
   case os:getenv("REBAR_BARE_COMPILER_OUTPUT_DIR") of
-    undefined ->
+    Res when Res == undefined; Res == "" ->
       EbinGlob = filename:join([Root, "_build", DefEnv, "lib", "*", "ebin"]),
+      %% io:format(standard_error, "==> Not bare compiled: ~p\n", [EbinGlob]),
       [code:add_pathz(P) || P <- filelib:wildcard(EbinGlob)];
     EnvPath ->
       Dir = filename:join(EnvPath, "ebin"),
+      %% io:format(standard_error, "==> Bare compiled: ~s\n", [Dir]),
       code:add_patha(Dir)
   end,
 
