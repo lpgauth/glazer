@@ -28,6 +28,8 @@ formats.
 - [Performance](#performance)
 - [JSON](#json-1)
   - [Usage](#usage)
+    - [Erlang](#erlang)
+    - [Elixir](#elixir)
   - [Streaming](#streaming)
     - [Efficiency](#efficiency)
   - [Null term configuration](#null-term-configuration)
@@ -43,6 +45,8 @@ formats.
   - [Benchmarking JSON](#benchmarking-json)
 - [YAML](#yaml-1)
   - [Usage](#usage-1)
+    - [Erlang](#erlang-1)
+    - [Elixir](#elixir-1)
   - [Streaming](#streaming-1)
   - [YAML decode options](#yaml-decode-options)
   - [YAML encode options](#yaml-encode-options)
@@ -50,6 +54,10 @@ formats.
   - [Benchmarking YAML](#benchmarking-yaml)
 - [CSV](#csv-1)
   - [Usage](#usage-2)
+    - [Erlang](#erlang-2)
+    - [Elixir](#elixir-2)
+    - [Erlang](#erlang-3)
+    - [Elixir](#elixir-3)
   - [Streaming](#streaming-2)
   - [CSV decode options](#csv-decode-options)
   - [Field type conversion](#field-type-conversion)
@@ -217,6 +225,8 @@ Benchmarking data tables:
 
 ### [Usage](#table-of-contents)
 
+#### Erlang
+
 ```erlang
 1> glazer_json:decode(<<"{\"a\":1,\"b\":[true,null,3.5]}">>).
 #{<<"a">> => 1, <<"b">> => [true, null, 3.5]}
@@ -234,6 +244,25 @@ Benchmarking data tables:
 {ok, <<"{\n  \"a\": 1\n}">>}
 ```
 
+#### Elixir
+
+```elixir
+iex(1)> Glazer.JSON.decode!(<<"{\"a\":1,\"b\":[true,null,3.5]}">>)
+%{"a" => 1, "b" => [true, nil, 3.5]}
+
+iex(2)> Glazer.JSON.encode!(%{"a" => 1, "b" => [true, nil, 3.5]})
+"{\"a\":1,\"b\":[true,null,3.5]}"
+
+iex(3)> Glazer.JSON.encode!(%{a: 1}, [:pretty])
+"{\n   \"a\": 1\n}"
+
+iex(4)> Glazer.JSON.minify!(" { \"a\" : 1 } ")
+"{\"a\":1}"
+
+iex(5)> Glazer.JSON.prettify!("{\"a\":1}")
+"{\n   \"a\": 1\n}"
+```
+
 ### [Streaming](#table-of-contents)
 
 For input that arrives in chunks — e.g. reading a large document
@@ -247,8 +276,6 @@ the available data. Once the input is exhausted, call `stream_eof/1` to flush
 any trailing bare scalar (numbers, strings, etc. have no closing
 delimiter of their own) and surface an error if the buffer holds an
 incomplete value:
-
-
 
 ```erlang
 1> {continue, State} = glazer_json:decode_start(~"{\"a\":", ok, []).
@@ -673,12 +700,24 @@ stdlib/json       6751.0   4048.0     8328.0   7894.0       19.0     16.0       
 become maps, sequences become lists, and scalars become the matching
 Erlang type (binaries, numbers, booleans, or `null`):
 
+#### Erlang
+
 ```erlang
 1> glazer_yaml:decode(<<"a: 1\nb:\n  - true\n  - null\n  - 3.5\n">>).
 #{<<"a">> => 1, <<"b">> => [true, null, 3.5]}
 
 2> glazer_yaml:encode(#{<<"a">> => 1, <<"b">> => [true, null, 3.5]}).
 <<"a: 1\nb:\n  - true\n  - null\n  - 3.5\n">>
+```
+
+#### Elixir
+
+```elixir
+iex(1)> Glazer.YAML.decode!("a: 1\nb:\n  - true\n  - null\n  - 3.5\n")
+%{"a" => 1, "b" => [true, :null, 3.5]}
+
+iex(2)> Glazer.YAML.encode!(%{"a" => 1, "b" => [true, :null, 3.5]})
+"a: 1\nb:\n- true\n- null\n- 3.5\n"
 ```
 
 `encode/1,2` encodes an Erlang term to YAML in block style
@@ -767,6 +806,8 @@ ymlr               n/a     18.2        n/a     14.3        n/a      2.3
 data => Rows}`, where `Rows` is a list of rows, each row a list of binary
 fields by default:
 
+#### Erlang
+
 ```erlang
 1> glazer_csv:decode(<<"name,age\nAlice,30\nBob,25\n">>).
 #{headers => nil,
@@ -776,10 +817,22 @@ fields by default:
 <<"name,age\r\nAlice,30\r\n">>
 ```
 
+#### Elixir
+
+```elixir
+iex(1)> Glazer.CSV.decode!("name,age\nAlice,30\nBob,25\n")
+%{data: [["name", "age"], ["Alice", "30"], ["Bob", "25"]], headers: nil}
+
+iex(2)> Glazer.CSV.encode!([["name", "age"], ["Alice", "30"], ["Bob", "25"]])
+"name,age\r\nAlice,30\r\nBob,25\r\n"
+```
+
 With the `headers` option, the first row is captured as column names in
 `headers` and each subsequent row decodes to a map when combined with
 `{return, map}`; `encode/2` with `headers` does the reverse, deriving the
 header row from the first map's keys:
+
+#### Erlang
 
 ```erlang
 1> glazer_csv:decode(<<"name,age\nAlice,30\n">>, [headers, {return, map}]).
@@ -787,7 +840,17 @@ header row from the first map's keys:
   data    => [#{<<"name">> => <<"Alice">>, <<"age">> => <<"30">>}]}
 
 2> glazer_csv:encode([#{<<"name">> => <<"Alice">>, <<"age">> => 30}], [headers]).
-<<"name,age\r\nAlice,30\r\n">>
+<<"age,name\r\n30,Alice\r\n">>
+```
+
+#### Elixir
+
+```elixir
+iex(1)> Glazer.CSV.decode!("name,age\nAlice,30\n", [:headers, return: :map])
+%{data: [%{"age" => "30", "name" => "Alice"}], headers: ["name", "age"]}
+
+iex(2)> Glazer.CSV.encode!([%{"name" => "Alice", "age" => "30"}], [:headers])
+"age,name\r\n30,Alice\r\n"
 ```
 
 Fields containing the delimiter, a double quote, or a line break are
@@ -798,48 +861,30 @@ RFC 4180 and can be changed to `\n` via `{line_ending, lf}`.
 
 ### [Streaming](#table-of-contents)
 
-For input that arrives in chunks, `stream_decoder/0,1` provides the
-same kind of stateful wrapper as [JSON streaming](#streaming): it buffers
-partial input and decodes each row as soon as its terminating line break
-is seen, via `decode/2` on that single row. A small scanner tracks
-whether the cursor is inside a quoted field across chunks, so a `\n`/`\r\n`
-inside a quoted field doesn't end the row:
+For input that arrives in chunks — e.g. reading a large document
+incrementally, or consuming CSV from a
+socket or file — `decode_start/3` provides a small stateful
+wrapper that buffers partial input and decodes each CSV record as soon
+as it's complete, without re-parsing bytes you've already seen.
+`decode_continue/2` returns `{Value, Acc, Rest::binary()}` if a `Value` is
+complete and parsed, or `{continue, State}` if the value cannot be parsed given
+the available data. Once the input is exhausted, call `stream_eof/1` to flush
+any trailing bare scalar (numbers, strings, etc. have no closing
+delimiter of their own) and surface an error if the buffer holds an
+incomplete value:
 
 ```erlang
-1> D0 = glazer_csv:stream_decoder(),
-2> {Rows1, D1} = glazer_csv:stream_feed(D0, <<"a,b\n1,2\n3,">>),
-3> Rows1.
-[[<<"a">>,<<"b">>],[<<"1">>,<<"2">>]]
-
-4> {Rows2, D2} = glazer_csv:stream_feed(D1, <<"4\n">>),
-5> Rows2.
-[[<<"3">>,<<"4">>]]
-
-6> glazer_csv:stream_eof(D2).
-{ok, []}
+1> {[<<"a">>,<<"b">>], ok, Bin1} = glazer_csv:decode_start(~"a,b\n1,2\n3,", ok, []).
+%% Bin = <<"1,2\n3,">>
+2> {[<<"1">>,<<"2">>], ok, Bin2} = glazer_csv:decode_start(Bin1, ok, []).
+%% Bin = <<"3,">>
+3> {continue, State} = glazer_csv:decode_start(Bin2, ok, []).
+4> glazer_csv:decode_continue(~"4\n", State).
+{[<<"3">>,<<"4">>],ok,<<>>}
 ```
 
-`stream_feed/2` returns the rows completed by the chunk just fed
-(possibly empty, possibly more than one) along with the updated decoder
-state. Once the input is exhausted, call `stream_eof/1` to flush a
-trailing row that has no terminating line break, or surface an error if
-the buffered bytes don't form a valid row:
-
-```erlang
-1> D0 = glazer_csv:stream_decoder(),
-2> {Rows1, D1} = glazer_csv:stream_feed(D0, <<"a,b\n1,2">>),
-3> Rows1.
-[[<<"a">>,<<"b">>]]
-
-4> glazer_csv:stream_eof(D1).
-{ok, [[<<"1">>,<<"2">>]]}
-```
-
-`stream_decoder/1` accepts the same options as `decode/2`. With
-the `headers` option, the first complete row is captured as the header and
-used to decode every subsequent row (as a map when combined with
-`{return, map}`); no row is emitted for the header itself. Blank lines are
-skipped, matching `decode/2`.
+`glazer_csv:decode_start/3` accepts the same options as `decode/2` (e.g.
+`{keys, atom}`, `use_nil`) and applies them to every decoded value.
 
 ### [CSV decode options](#table-of-contents)
 
