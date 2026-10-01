@@ -28,8 +28,6 @@ formats.
 - [Performance](#performance)
 - [JSON](#json-1)
   - [Usage](#usage)
-    - [Erlang](#erlang)
-    - [Elixir](#elixir)
   - [Streaming](#streaming)
     - [Efficiency](#efficiency)
   - [Null term configuration](#null-term-configuration)
@@ -45,8 +43,6 @@ formats.
   - [Benchmarking JSON](#benchmarking-json)
 - [YAML](#yaml-1)
   - [Usage](#usage-1)
-    - [Erlang](#erlang-1)
-    - [Elixir](#elixir-1)
   - [Streaming](#streaming-1)
   - [YAML decode options](#yaml-decode-options)
   - [YAML encode options](#yaml-encode-options)
@@ -54,10 +50,6 @@ formats.
   - [Benchmarking YAML](#benchmarking-yaml)
 - [CSV](#csv-1)
   - [Usage](#usage-2)
-    - [Erlang](#erlang-2)
-    - [Elixir](#elixir-2)
-    - [Erlang](#erlang-3)
-    - [Elixir](#elixir-3)
   - [Streaming](#streaming-2)
   - [CSV decode options](#csv-decode-options)
   - [Field type conversion](#field-type-conversion)
@@ -94,6 +86,7 @@ formats.
 - `glazer:find/2` and `glazer:compile_path/1`: look up value(s) in a
   decoded term using a small subset of jq path syntax (`.a.b[].c[0]`),
   with no `libjq` dependency
+- Support native Erlang and Elixir API via `glazer_json` and `Glazer.JSON` modules
 
 ### [YAML](#table-of-contents)
 
@@ -102,6 +95,7 @@ formats.
 - Encoding Erlang terms to YAML in block style
 - Configurable representation of YAML `null` and mapping keys, with
   optional YAML 1.1 boolean compatibility (`yes`/`no`/`on`/`off`)
+- Support native Erlang and Elixir API via `glazer_yaml` and `Glazer.YAML` modules
 
 ### [CSV](#table-of-contents)
 
@@ -109,6 +103,7 @@ formats.
   with optional header-row support
 - Incremental/streaming CSV decoding via `decode_start/3`,
   `decode_continue/2`
+- Support native Erlang and Elixir API via `glazer_csv` and `Glazer.CSV` modules
 
 ## [Installation](#table-of-contents)
 
@@ -225,7 +220,7 @@ Benchmarking data tables:
 
 ### [Usage](#table-of-contents)
 
-#### Erlang
+**Erlang**
 
 ```erlang
 1> glazer_json:decode(<<"{\"a\":1,\"b\":[true,null,3.5]}">>).
@@ -244,7 +239,7 @@ Benchmarking data tables:
 {ok, <<"{\n  \"a\": 1\n}">>}
 ```
 
-#### Elixir
+**Elixir**
 
 ```elixir
 iex(1)> Glazer.JSON.decode!(<<"{\"a\":1,\"b\":[true,null,3.5]}">>)
@@ -700,7 +695,7 @@ stdlib/json       6751.0   4048.0     8328.0   7894.0       19.0     16.0       
 become maps, sequences become lists, and scalars become the matching
 Erlang type (binaries, numbers, booleans, or `null`):
 
-#### Erlang
+**Erlang**
 
 ```erlang
 1> glazer_yaml:decode(<<"a: 1\nb:\n  - true\n  - null\n  - 3.5\n">>).
@@ -710,7 +705,7 @@ Erlang type (binaries, numbers, booleans, or `null`):
 <<"a: 1\nb:\n  - true\n  - null\n  - 3.5\n">>
 ```
 
-#### Elixir
+**Elixir**
 
 ```elixir
 iex(1)> Glazer.YAML.decode!("a: 1\nb:\n  - true\n  - null\n  - 3.5\n")
@@ -806,7 +801,7 @@ ymlr               n/a     18.2        n/a     14.3        n/a      2.3
 data => Rows}`, where `Rows` is a list of rows, each row a list of binary
 fields by default:
 
-#### Erlang
+**Erlang**
 
 ```erlang
 1> glazer_csv:decode(<<"name,age\nAlice,30\nBob,25\n">>).
@@ -817,7 +812,7 @@ fields by default:
 <<"name,age\r\nAlice,30\r\n">>
 ```
 
-#### Elixir
+**Elixir**
 
 ```elixir
 iex(1)> Glazer.CSV.decode!("name,age\nAlice,30\nBob,25\n")
@@ -832,7 +827,7 @@ With the `headers` option, the first row is captured as column names in
 `{return, map}`; `encode/2` with `headers` does the reverse, deriving the
 header row from the first map's keys:
 
-#### Erlang
+**Erlang**
 
 ```erlang
 1> glazer_csv:decode(<<"name,age\nAlice,30\n">>, [headers, {return, map}]).
@@ -843,7 +838,7 @@ header row from the first map's keys:
 <<"age,name\r\n30,Alice\r\n">>
 ```
 
-#### Elixir
+**Elixir**
 
 ```elixir
 iex(1)> Glazer.CSV.decode!("name,age\nAlice,30\n", [:headers, return: :map])
